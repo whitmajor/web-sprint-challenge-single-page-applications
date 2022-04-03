@@ -1,5 +1,6 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import * as yup from "yup"
+import schema from "../Validation/FormSchema"
 
 
 const orderFormValues = {
@@ -18,16 +19,41 @@ const orderFormValues = {
 const OrderForm = ()=>{
 
  const formSchema = yup.object().shape({
-    name: yup.string().min(2, "name must be at least 2 characters" ),
+    name: yup.string().min(2,"name must be at least 2 characters"),
     size: yup.string(),
     topping1: yup.boolean().oneOf([true],"You have to pick your topping"),
-    topping2: yup.boolean(),
-    topping3: yup.boolean(),
-    topping4: yup.boolean(),
-    special: yup.string(),
+    topping2: yup.boolean().oneOf([true],"You have to pick your topping"),
+    topping3: yup.boolean().oneOf([true],"You have to pick your topping"),
+    topping4: yup.boolean().oneOf([true],"You have to pick your topping"),
+    special: yup.string().oneOf([true],"You have to pick your topping"),
 
 })
+const [errors, setErrors ] = useState(
+    {
+        name: " ",
+        size: " ",
+        topping1: "",
+        topping2: "",
+        topping3: "",
+        topping4: "",
+        special:" ",
+    
+    }
+)
+const [disabled, setDisabled]= useState(true)
 
+const validateChange = (name, value) => {
+yup.reach(formSchema, name)
+.validate(value)
+.then(()=>{
+    setErrors({...errors,[name]: ""})
+
+})
+.catch((error)=>{
+    setErrors({...errors,[name]: error.errors[0]})
+}
+)
+}
 const [form, setForm] = useState(orderFormValues)
 
 
@@ -35,12 +61,24 @@ const SubmitHandler = (e) =>{
 
     e.preventDefault()
 
-
 }
+useEffect(()=>{
+    formSchema.isValid(form)
+     .then((valid)=>{
+         setDisabled(!valid)
+     })
+},[form])
+
+
+
 const formChange = evt =>{
 const name = evt.target.name
 const value = evt.target.type === "checkbox"?  evt.target.checked : evt.target.value
+
+validateChange(name,value)
+
 setForm({...form, [name]: [value]})
+
 }
     return(
         <section className = "pizza-form-wrapper">
@@ -50,7 +88,8 @@ setForm({...form, [name]: [value]})
         
             
                 <form onSubmit={SubmitHandler}>
-                    <label>Name
+                    <label>
+                        <p>Name <span className = "error">{errors.name}</span></p>
                         <input 
                         type ="text"
                         name ="name"
@@ -137,7 +176,7 @@ setForm({...form, [name]: [value]})
                      onChange = {formChange}
                      />
                     </label>
-                    <button type= "submit" id = "order-button">Your pizza is waiting!</button>
+                    <button type= "submit" disabled= {disabled} id = "order-button">Your pizza is waiting!</button>
                 </form>
             </article>
 
